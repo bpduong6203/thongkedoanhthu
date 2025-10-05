@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from '@supabase/supabase-js';
 import { PlusCircle, Trash2, Download, RefreshCw, TrendingUp, DollarSign, Calendar } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const SUPABASE_URL = 'https://lfpglsccsdmykvdlcqii.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmcGdsc2Njc2RteWt2ZGxjcWlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk2MjU0MDksImV4cCI6MjA3NTIwMTQwOX0.PqmXl0-mSm4S8BQdS_vnsPftjB5yK131Ocwc7H9EJv8';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const DISHES = {
+const DISHES: { [key: string]: number[] } = {
   'Bánh Xèo': [30000, 25000],
   'Bánh Khọt': [35000],
   'Gỏi Cuốn': [6000],
@@ -16,14 +16,38 @@ const DISHES = {
   'Bột Chiên': [20000, 25000, 30000]
 };
 
+interface Transaction {
+  id: string;
+  dish_name: string;
+  price: number;
+  quantity: number;
+  total: number;
+  created_at: string;
+  created_by: string;
+}
+
+interface DailyStats {
+  [key: string]: {
+    revenue: number;
+    count: number;
+  };
+}
+
+interface DishStats {
+  [key: string]: {
+    quantity: number;
+    revenue: number;
+  };
+}
+
 function App() {
-  const [transactions, setTransactions] = useState([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDish, setSelectedDish] = useState('Bánh Xèo');
   const [selectedPrice, setSelectedPrice] = useState(30000);
   const [quantity, setQuantity] = useState(1);
   const [createdBy, setCreatedBy] = useState('Nhân viên');
-  const [dateRange, setDateRange] = useState('7'); // 7 ngày gần nhất
+  const [dateRange, setDateRange] = useState('7');
 
   const fetchTransactions = async () => {
     try {
@@ -37,7 +61,7 @@ function App() {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      setTransactions(data || []);
+      setTransactions(data as Transaction[] || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -78,11 +102,12 @@ function App() {
       setQuantity(1);
       alert('✅ Đã thêm giao dịch thành công!');
     } catch (err) {
-      alert('❌ Lỗi: ' + err.message);
+      const errorMessage = err instanceof Error ? err.message : 'Lỗi không xác định';
+      alert('❌ Lỗi: ' + errorMessage);
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id: string) => {
     if (!confirm('Xóa giao dịch này?')) return;
     
     try {
@@ -93,13 +118,13 @@ function App() {
       
       if (error) throw error;
     } catch (err) {
-      alert('❌ Lỗi xóa: ' + err.message);
+      const errorMessage = err instanceof Error ? err.message : 'Lỗi không xác định';
+      alert('❌ Lỗi xóa: ' + errorMessage);
     }
   };
 
-  // Thống kê theo ngày
   const getDailyStatistics = () => {
-    const dailyStats = {};
+    const dailyStats: DailyStats = {};
     let totalRevenue = 0;
 
     transactions.forEach(t => {
@@ -115,10 +140,9 @@ function App() {
     return { dailyStats, totalRevenue };
   };
 
-  // Thống kê theo món (hôm nay)
   const getTodayDishStats = () => {
     const today = new Date().toLocaleDateString('vi-VN');
-    const stats = {};
+    const stats: DishStats = {};
     
     transactions
       .filter(t => new Date(t.created_at).toLocaleDateString('vi-VN') === today)
@@ -156,16 +180,14 @@ function App() {
   const { dailyStats, totalRevenue } = getDailyStatistics();
   const dishStats = getTodayDishStats();
 
-  // Dữ liệu biểu đồ theo ngày
   const dailyChartData = Object.entries(dailyStats)
     .map(([date, data]) => ({
       name: date,
       'Doanh thu': data.revenue,
       'Số giao dịch': data.count
     }))
-    .reverse(); // Sắp xếp từ cũ đến mới
+    .reverse();
 
-  // Doanh thu hôm nay
   const today = new Date().toLocaleDateString('vi-VN');
   const todayRevenue = dailyStats[today]?.revenue || 0;
   const todayCount = dailyStats[today]?.count || 0;
@@ -188,7 +210,6 @@ function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
@@ -225,7 +246,6 @@ function App() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Form nhập liệu */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-xl p-6 sticky top-4">
               <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
@@ -303,9 +323,7 @@ function App() {
             </div>
           </div>
 
-          {/* Thống kê và biểu đồ */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Tổng doanh thu */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-xl p-6 text-white">
                 <div className="flex items-center justify-between">
@@ -330,7 +348,6 @@ function App() {
               </div>
             </div>
 
-            {/* Biểu đồ doanh thu theo ngày */}
             <div className="bg-white rounded-2xl shadow-xl p-6">
               <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                 <TrendingUp className="w-6 h-6 text-green-600" />
@@ -342,7 +359,7 @@ function App() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" angle={-15} textAnchor="end" height={80} fontSize={12} />
                     <YAxis />
-                    <Tooltip formatter={(value) => value.toLocaleString('vi-VN') + ' đ'} />
+                    <Tooltip formatter={(value: number) => value.toLocaleString('vi-VN') + ' đ'} />
                     <Legend />
                     <Bar dataKey="Doanh thu" fill="#10b981" />
                   </BarChart>
@@ -352,7 +369,6 @@ function App() {
               )}
             </div>
 
-            {/* Thống kê món hôm nay */}
             <div className="bg-white rounded-2xl shadow-xl p-6">
               <h2 className="text-2xl font-bold text-gray-800 mb-4">📋 Thống Kê Món Hôm Nay</h2>
               {Object.keys(dishStats).length > 0 ? (
@@ -372,7 +388,6 @@ function App() {
               )}
             </div>
 
-            {/* Bảng giao dịch chi tiết */}
             <div className="bg-white rounded-2xl shadow-xl p-6">
               <h2 className="text-2xl font-bold text-gray-800 mb-4">📋 Chi Tiết Giao Dịch</h2>
               <div className="overflow-x-auto">
