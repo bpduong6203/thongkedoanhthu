@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { PlusCircle, Trash2, RefreshCw, TrendingUp, DollarSign, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import Lottie from 'lottie-react';
+import loadingAnimation from './assets/cat Mark loading.json';
 
 const SUPABASE_URL = 'https://lfpglsccsdmykvdlcqii.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmcGdsc2Njc2RteWt2ZGxjcWlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk2MjU0MDksImV4cCI6MjA3NTIwMTQwOX0.PqmXl0-mSm4S8BQdS_vnsPftjB5yK131Ocwc7H9EJv8';
@@ -185,12 +187,18 @@ function App() {
     setSelectedPrice(DISHES[selectedDish][0]);
   }, [selectedDish]);
 
+  // Animation JSON - Bạn có thể thay bằng file riêng
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
-        <div className="text-center">
-          <RefreshCw className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-xl text-gray-600">Đang tải dữ liệu...</p>
+      <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
+        <div className="flex flex-col items-center">
+          <Lottie 
+            animationData={loadingAnimation}
+            loop={true}
+            style={{ width: 200, height: 200 }}
+          />
+          <p className="text-xl text-gray-600 mt-4">Đang tải dữ liệu...</p>
         </div>
       </div>
     );
