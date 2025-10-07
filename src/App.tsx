@@ -183,11 +183,32 @@ function App() {
   const endIndex = startIndex + itemsPerPage;
   const currentTransactions = transactions.slice(startIndex, endIndex);
 
+  // Generate pagination range
+  const maxPagesToShow = 5;
+  const halfPagesToShow = Math.floor(maxPagesToShow / 2);
+  let startPage = Math.max(1, currentPage - halfPagesToShow);
+  let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+  if (endPage - startPage + 1 < maxPagesToShow) {
+    startPage = Math.max(1, endPage - maxPagesToShow + 1);
+  }
+
+  const pages = [];
+  if (startPage > 1) {
+    pages.push(1);
+    if (startPage > 2) pages.push('...');
+  }
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(i);
+  }
+  if (endPage < totalPages) {
+    if (endPage < totalPages - 1) pages.push('...');
+    pages.push(totalPages);
+  }
+
   useEffect(() => {
     setSelectedPrice(DISHES[selectedDish][0]);
   }, [selectedDish]);
-
-  // Animation JSON - Bạn có thể thay bằng file riêng
 
   if (loading) {
     return (
@@ -478,39 +499,37 @@ function App() {
               </div>
 
               {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                  <div className="text-sm text-gray-600">
-                    Hiển thị {startIndex + 1}-{Math.min(endIndex, transactions.length)} / {transactions.length} giao dịch
-                  </div>
-                  <div className="flex gap-2">
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
+                  <div className="flex items-center gap-1">
                     <button
                       onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                       disabled={currentPage === 1}
-                      className="px-3 py-2 border-2 border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition"
+                      className="p-1.5 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
                     >
-                      <ChevronLeft className="w-5 h-5" />
+                      <ChevronLeft className="w-4 h-4" />
                     </button>
-                    <div className="flex items-center gap-1">
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                        <button
-                          key={page}
-                          onClick={() => setCurrentPage(page)}
-                          className={`px-3 py-2 rounded-lg transition ${
-                            currentPage === page
-                              ? 'bg-blue-600 text-white'
-                              : 'border-2 border-gray-200 hover:bg-gray-50'
-                          }`}
-                        >
-                          {page}
-                        </button>
-                      ))}
-                    </div>
+                    {pages.map((page, index) => (
+                      <button
+                        key={index}
+                        onClick={() => typeof page === 'number' && setCurrentPage(page)}
+                        className={`px-2.5 py-1 text-sm rounded-md transition-colors ${
+                          page === currentPage
+                            ? 'bg-blue-600 text-white'
+                            : typeof page === 'number'
+                            ? 'border border-gray-300 hover:bg-gray-100'
+                            : 'text-gray-500 cursor-default'
+                        }`}
+                        disabled={typeof page !== 'number'}
+                      >
+                        {page}
+                      </button>
+                    ))}
                     <button
                       onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                       disabled={currentPage === totalPages}
-                      className="px-3 py-2 border-2 border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition"
+                      className="p-1.5 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
                     >
-                      <ChevronRight className="w-5 h-5" />
+                      <ChevronRight className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
